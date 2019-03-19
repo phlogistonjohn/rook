@@ -39,6 +39,7 @@ type Param struct {
 var (
 	CSIParam Param
 
+	EnableAll    = true
 	EnableRBD    = true
 	EnableCephFS = true
 
@@ -74,10 +75,7 @@ const (
 )
 
 func CSIEnabled() bool {
-	if EnableRBD || EnableCephFS {
-		return true
-	}
-	return false
+	return EnableAll || EnableRBD || EnableCephFS
 }
 
 func SetCSINamespace(namespace string) {
@@ -85,7 +83,7 @@ func SetCSINamespace(namespace string) {
 }
 
 func ValidateCSIParam() error {
-	if EnableRBD {
+	if EnableAll || EnableRBD {
 		if len(CSIParam.RBDPluginImage) == 0 {
 			return fmt.Errorf("missing csi rbd plugin image")
 		}
@@ -109,7 +107,7 @@ func ValidateCSIParam() error {
 		}
 	}
 
-	if EnableCephFS {
+	if EnableAll || EnableCephFS {
 		if len(CSIParam.CephFSPluginImage) == 0 {
 			return fmt.Errorf("missing csi cephfs plugin image")
 		}
@@ -136,7 +134,7 @@ func StartCSIDrivers(namespace string, clientset kubernetes.Interface) error {
 		rbdProvisioner, rbdAttacher, cephfsProvisioner *apps.StatefulSet
 	)
 
-	if EnableRBD {
+	if EnableAll || EnableRBD {
 		rbdPlugin, err = templateToDaemonSet("rbdplugin", RBDPluginTemplatePath)
 		if err != nil {
 			return fmt.Errorf("failed to load rbd plugin template: %v", err)
@@ -150,7 +148,7 @@ func StartCSIDrivers(namespace string, clientset kubernetes.Interface) error {
 			return fmt.Errorf("failed to load rbd attacher template: %v", err)
 		}
 	}
-	if EnableCephFS {
+	if EnableAll || EnableCephFS {
 		cephfsPlugin, err = templateToDaemonSet("cephfsplugin", CephFSPluginTemplatePath)
 		if err != nil {
 			return fmt.Errorf("failed to load CephFS plugin template: %v", err)
