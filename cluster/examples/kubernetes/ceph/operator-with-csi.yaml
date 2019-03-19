@@ -495,12 +495,10 @@ spec:
         - name: ROOK_ENABLE_SELINUX_RELABELING
           value: "true"
         # CSI enablement
-        - name: ROOK_CSI_ENABLE_CEPHFS
+        - name: ROOK_CSI_ENABLE
           value: "true"
         - name: ROOK_CSI_CEPHFS_IMAGE
           value: "quay.io/cephcsi/cephfsplugin:v1.0.0"
-        - name: ROOK_CSI_ENABLE_RBD
-          value: "true"
         - name: ROOK_CSI_RBD_IMAGE
           value: "quay.io/cephcsi/rbdplugin:v1.0.0"
         - name: ROOK_CSI_REGISTRAR_IMAGE
