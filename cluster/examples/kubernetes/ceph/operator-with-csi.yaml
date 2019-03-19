@@ -427,10 +427,6 @@ spec:
           name: rook-config
         - mountPath: /etc/ceph
           name: default-config-dir
-        - mountPath: /etc/ceph-csi/rbd
-          name: csi-rbd-config
-        - mountPath: /etc/ceph-csi/cephfs
-          name: csi-cephfs-config                    
         env:
         # To disable RBAC, uncomment the following:
         # - name: RBAC_ENABLED
@@ -529,9 +525,3 @@ spec:
         emptyDir: {}
       - name: default-config-dir
         emptyDir: {}
-      - name: csi-rbd-config
-        configMap:
-          name: csi-rbd-config
-      - name: csi-cephfs-config
-        configMap:
-          name: csi-cephfs-config
