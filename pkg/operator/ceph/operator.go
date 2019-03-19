@@ -106,23 +106,13 @@ func (o *Operator) Run() error {
 		return fmt.Errorf("Error getting server version: %v", err)
 	}
 
-	if serverVersion.Major >= csi.KubeMinMajor && serverVersion.Minor >= csi.KubeMinMinor && csi.CSIEnabled() {
-		logger.Infof("Ceph CSI driver is enabled, validate csi param")
-		if err = csi.ValidateCSIParam(); err != nil {
-			logger.Warningf("invalid csi params: %v", err)
+	if csi.CSIEnabled() {
+		if err := csi.StartCephCsi(namespace, o.context.Clientset, serverVersion); err != nil {
+			logger.Warningf("failed to start Ceph CSI subsystem: %v", err)
 			if csi.RequireCSI {
 				return err
 			}
-		} else {
-			csi.SetCSINamespace(namespace)
-			if err = csi.StartCSIDrivers(namespace, o.context.Clientset); err != nil {
-				logger.Warningf("failed to start Ceph csi drivers: %v", err)
-				if csi.RequireCSI {
-					return err
-				}
-			} else {
-				logger.Infof("successfully started Ceph csi drivers")
-			}
+			logger.Warningf("Ceph CSI support not required, continuing")
 		}
 	}
 

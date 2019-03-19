@@ -22,6 +22,7 @@ import (
 	"github.com/rook/rook/pkg/operator/k8sutil"
 
 	apps "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -192,4 +193,26 @@ func StartCSIDrivers(namespace string, clientset kubernetes.Interface) error {
 
 	}
 	return nil
+}
+
+// StartCephCsi checks if CSI support is valid in the k8s cluster and then
+// starts the CSI driver components. An error is returned if any of the steps
+// fail.
+func StartCephCsi(namespace string, clientset kubernetes.Interface, serverVersion *version.Info) error {
+	if !(serverVersion.Major >= KubeMinMajor &&
+		serverVersion.Minor >= KubeMinMinor) {
+
+		return fmt.Errorf(
+			"Kubernetes version is too low for Ceph CSI support."+
+				"Need version %v.%v, found version %v.%v.",
+			KubeMinMajor, KubeMinMinor,
+			serverVersion.Major, serverVersion.Minor)
+	}
+
+	if err := ValidateCSIParam(); err != nil {
+		return err
+	}
+
+	SetCSINamespace(namespace)
+	return StartCSIDrivers(namespace, clientset)
 }
