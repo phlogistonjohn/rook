@@ -110,14 +110,14 @@ func (o *Operator) Run() error {
 		logger.Infof("Ceph CSI driver is enabled, validate csi param")
 		if err = csi.ValidateCSIParam(); err != nil {
 			logger.Warningf("invalid csi params: %v", err)
-			if csi.ExitOnError {
+			if csi.RequireCSI {
 				return err
 			}
 		} else {
 			csi.SetCSINamespace(namespace)
 			if err = csi.StartCSIDrivers(namespace, o.context.Clientset); err != nil {
 				logger.Warningf("failed to start Ceph csi drivers: %v", err)
-				if csi.ExitOnError {
+				if csi.RequireCSI {
 					return err
 				}
 			} else {

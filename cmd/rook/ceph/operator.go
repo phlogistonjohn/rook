@@ -46,6 +46,7 @@ func init() {
 	operatorCmd.Flags().BoolVar(&csi.EnableAll, "csi-enable", false, "enable all ceph csi support")
 	operatorCmd.Flags().BoolVar(&csi.EnableRBD, "csi-enable-rbd", false, "enable ceph-csi rbd support")
 	operatorCmd.Flags().BoolVar(&csi.EnableCephFS, "csi-enable-cephfs", false, "enable ceph-csi cephfs support")
+	operatorCmd.Flags().BoolVar(&csi.RequireCSI, "csi-required", false, "if ceph csi is enabled, do not fall back to flex volume support")
 	// csi images
 	operatorCmd.Flags().StringVar(&csi.CSIParam.RBDPluginImage, "csi-rbd-image", csi.DefaultRBDPluginImage, "ceph-csi rbd plugin image")
 	operatorCmd.Flags().StringVar(&csi.CSIParam.CephFSPluginImage, "csi-cephfs-image", csi.DefaultCephFSPluginImage, "ceph-csi cephfs plugin image")
