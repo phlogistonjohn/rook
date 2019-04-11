@@ -463,6 +463,10 @@ func (c *Cluster) saveMonConfig() error {
 
 	logger.Infof("saved mon endpoints to config map %+v", configMap.Data)
 
+	if err := saveCsiClusterSecret(c); err != nil {
+		return err
+	}
+
 	// Every time the mon config is updated, must also update the global config so that all daemons
 	// have the most updated version if they restart.
 	config.GetStore(c.context, c.Namespace, &c.ownerRef).CreateOrUpdate(c.clusterInfo)
@@ -626,4 +630,42 @@ func (c *Cluster) acquireOrchestrationLock() {
 func (c *Cluster) releaseOrchestrationLock() {
 	c.orchestrationMutex.Unlock()
 	logger.Debugf("Released lock for mon orchestration")
+}
+
+func saveCsiClusterSecret(c *Cluster) error {
+	secretName := fmt.Sprintf("ceph-cluster-%s-secret", c.clusterInfo.FSID)
+	csiSecret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        secretName,
+			Namespace:   c.Namespace,
+			Annotations: map[string]string{},
+		},
+	}
+	k8sutil.SetOwnerRef(c.context.Clientset, c.Namespace, &csiSecret.ObjectMeta, &c.ownerRef)
+
+	endpoints := []string{}
+	for _, m := range c.clusterInfo.Monitors {
+		endpoints = append(endpoints, m.Endpoint)
+	}
+	monEndpoints := strings.Join(endpoints, ",")
+
+	csiSecret.Data = map[string][]byte{
+		"monitors": []byte(monEndpoints),
+		"adminid":  []byte("admin"),
+		"userid":   []byte("admin"),
+	}
+
+	if _, err := c.context.Clientset.CoreV1().Secrets(c.Namespace).Create(csiSecret); err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create mon endpoint config map. %+v", err)
+		}
+
+		logger.Debugf("updating config map %s that already exists", csiSecret.Name)
+		if _, err = c.context.Clientset.CoreV1().Secrets(c.Namespace).Update(csiSecret); err != nil {
+			return fmt.Errorf("failed to update mon endpoint config map. %+v", err)
+		}
+	}
+
+	logger.Infof("saved mon endpoints to config map %+v", csiSecret.Data)
+	return nil
 }
